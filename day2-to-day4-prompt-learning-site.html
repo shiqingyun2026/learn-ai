@@ -1,0 +1,2170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>从任务提示词到工具调用提示词 | Day 2 - Day 4 Prompt 学习页</title>
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --paper: rgba(255, 251, 245, 0.9);
+      --paper-strong: #fffaf2;
+      --ink: #1f1d1a;
+      --muted: #625b54;
+      --line: rgba(53, 43, 32, 0.12);
+      --sand: #c7b49a;
+      --brand: #99512a;
+      --brand-deep: #6d3415;
+      --accent: #0f6f73;
+      --accent-soft: rgba(15, 111, 115, 0.12);
+      --warning: #7c4d20;
+      --shadow: 0 24px 60px rgba(65, 43, 24, 0.12);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --max: 1220px;
+      --header-h: 72px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.75;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(153, 81, 42, 0.15), transparent 24%),
+        radial-gradient(circle at 100% 0%, rgba(15, 111, 115, 0.16), transparent 22%),
+        linear-gradient(180deg, #faf6f0 0%, var(--bg) 52%, #f2ecdf 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(109, 52, 21, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(109, 52, 21, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 95%);
+      z-index: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .progress {
+      position: fixed;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      transform-origin: left center;
+      transform: scaleX(0);
+      z-index: 30;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(250, 246, 240, 0.72);
+      border-bottom: 1px solid rgba(67, 51, 34, 0.08);
+    }
+
+    .header-inner {
+      width: min(var(--max), calc(100vw - 32px));
+      min-height: var(--header-h);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(135deg, rgba(153, 81, 42, 0.2), rgba(15, 111, 115, 0.22)),
+        #fff8f0;
+      border: 1px solid rgba(109, 52, 21, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      color: var(--brand-deep);
+      font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      color: var(--brand-deep);
+    }
+
+    .brand-copy span {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .header-links a {
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      border: 1px solid transparent;
+    }
+
+    .header-links a:hover,
+    .header-links a.active {
+      color: var(--brand-deep);
+      border-color: rgba(109, 52, 21, 0.12);
+      background: rgba(255, 255, 255, 0.56);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(var(--max), calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 26px 0 84px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 42px;
+      border: 1px solid var(--line);
+      border-radius: 38px;
+      box-shadow: var(--shadow);
+      background:
+        radial-gradient(circle at right top, rgba(15, 111, 115, 0.16), transparent 28%),
+        linear-gradient(135deg, rgba(255, 250, 242, 0.98), rgba(244, 236, 224, 0.9));
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -110px -110px auto;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(153, 81, 42, 0.16), transparent 68%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(153, 81, 42, 0.1);
+      color: var(--brand-deep);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      margin-top: 20px;
+      max-width: 11ch;
+      font-size: clamp(2.4rem, 4vw, 4.6rem);
+      line-height: 1.05;
+    }
+
+    .hero-lead {
+      margin: 18px 0 0;
+      max-width: 760px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(109, 52, 21, 0.16);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--brand-deep);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--brand), #b96f3c);
+      color: #fff9f2;
+      border-color: transparent;
+      box-shadow: 0 14px 30px rgba(126, 66, 31, 0.2);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .hero-path {
+      display: grid;
+      gap: 14px;
+      margin-top: 36px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 30px;
+      align-items: end;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .hero-stat {
+      min-width: 128px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      background: rgba(255, 255, 255, 0.62);
+      backdrop-filter: blur(6px);
+    }
+
+    .hero-stat strong {
+      display: block;
+      font-size: 1.4rem;
+      line-height: 1;
+      color: var(--brand-deep);
+      margin-bottom: 6px;
+    }
+
+    .hero-stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 480px;
+      padding: 24px;
+      border-radius: 30px;
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      background:
+        linear-gradient(160deg, rgba(33, 31, 28, 0.97), rgba(46, 35, 27, 0.94));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 28px 44px rgba(42, 31, 23, 0.2);
+      overflow: hidden;
+    }
+
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      inset: -80px auto auto -80px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(15, 111, 115, 0.28), transparent 66%);
+      pointer-events: none;
+    }
+
+    .hero-visual::after {
+      content: "";
+      position: absolute;
+      inset: auto -60px -90px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(153, 81, 42, 0.24), transparent 70%);
+      pointer-events: none;
+    }
+
+    .console-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: rgba(255, 248, 238, 0.72);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .console-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .console-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 248, 238, 0.36);
+    }
+
+    .console-dots span:nth-child(1) {
+      background: #d07a49;
+    }
+
+    .console-dots span:nth-child(2) {
+      background: #c4a255;
+    }
+
+    .console-dots span:nth-child(3) {
+      background: #4fa09d;
+    }
+
+    .console-title {
+      color: rgba(255, 248, 238, 0.72);
+      font-weight: 700;
+    }
+
+    .visual-stack {
+      position: relative;
+      margin-top: 22px;
+      display: grid;
+      gap: 14px;
+      z-index: 1;
+    }
+
+    .signal-card {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 248, 238, 0.08);
+      background: linear-gradient(180deg, rgba(255, 248, 238, 0.08), rgba(255, 248, 238, 0.04));
+      backdrop-filter: blur(4px);
+      color: rgba(255, 248, 238, 0.92);
+      box-shadow: 0 16px 26px rgba(0, 0, 0, 0.14);
+    }
+
+    .signal-card:nth-child(2) {
+      transform: translateX(16px);
+    }
+
+    .signal-card:nth-child(3) {
+      transform: translateX(34px);
+    }
+
+    .signal-card:nth-child(4) {
+      transform: translateX(10px);
+    }
+
+    .signal-card .cap {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 248, 238, 0.09);
+      color: rgba(255, 248, 238, 0.82);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .signal-card strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .signal-card p {
+      margin-top: 8px;
+      color: rgba(255, 248, 238, 0.72);
+      font-size: 14px;
+    }
+
+    .signal-card ul {
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .signal-card li {
+      position: relative;
+      padding-left: 16px;
+      color: rgba(255, 248, 238, 0.75);
+      font-size: 13px;
+    }
+
+    .signal-card li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 9px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e7b36b, #4fa09d);
+    }
+
+    .guide-strip {
+      display: grid;
+      gap: 16px;
+      margin-top: 22px;
+      padding: 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: linear-gradient(135deg, rgba(255, 251, 245, 0.92), rgba(246, 239, 229, 0.78));
+      box-shadow: 0 18px 40px rgba(60, 38, 19, 0.08);
+    }
+
+    .guide-top {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .guide-top h2 {
+      font-size: clamp(1.5rem, 2vw, 2rem);
+    }
+
+    .guide-top p {
+      max-width: 560px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .mode-card {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      background: rgba(255, 255, 255, 0.72);
+      transition: transform 180ms ease, border 180ms ease, box-shadow 180ms ease;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(109, 52, 21, 0.12);
+      box-shadow: 0 16px 28px rgba(60, 38, 19, 0.08);
+    }
+
+    .mode-card .mode-tag {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 111, 115, 0.08);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .mode-card strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 18px;
+      color: var(--ink);
+    }
+
+    .mode-card p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hero-path-label {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .path-rail {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .path-rail::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 28px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(153, 81, 42, 0.18), rgba(15, 111, 115, 0.24));
+    }
+
+    .path-step {
+      position: relative;
+      padding-top: 0;
+      min-height: 88px;
+    }
+
+    .path-step::before {
+      content: "";
+      display: block;
+      width: 13px;
+      height: 13px;
+      margin: 22px auto 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      box-shadow: 0 0 0 8px rgba(255, 250, 242, 0.96);
+      position: relative;
+      z-index: 1;
+    }
+
+    .path-step strong {
+      display: block;
+      text-align: center;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .path-step span {
+      display: block;
+      margin-top: 6px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 24px;
+      margin-top: 28px;
+    }
+
+    .toc {
+      position: sticky;
+      top: calc(var(--header-h) + 16px);
+      align-self: start;
+      padding: 22px 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      background: rgba(255, 251, 245, 0.7);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 16px 34px rgba(62, 41, 23, 0.06);
+    }
+
+    .toc h2 {
+      font-size: 1rem;
+      margin-bottom: 14px;
+    }
+
+    .toc-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .toc-list a {
+      padding: 9px 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      font-size: 14px;
+      transition: background 160ms ease, color 160ms ease, border 160ms ease;
+    }
+
+    .toc-list a:hover,
+    .toc-list a.active {
+      color: var(--brand-deep);
+      border-color: rgba(109, 52, 21, 0.12);
+      background: rgba(255, 255, 255, 0.66);
+    }
+
+    .toc-note {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(53, 43, 32, 0.08);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 24px;
+    }
+
+    .section {
+      padding: 30px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--line);
+      background: var(--paper);
+      box-shadow: 0 18px 40px rgba(60, 38, 19, 0.08);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(15, 111, 115, 0.09);
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .section p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .section p + p {
+      margin-top: 10px;
+    }
+
+    .triptych,
+    .method-grid,
+    .types-grid,
+    .facts-grid,
+    .check-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .triptych {
+      margin-top: 22px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .phase {
+      position: relative;
+      padding: 22px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 249, 241, 0.68));
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      min-height: 280px;
+    }
+
+    .phase .day {
+      font-size: 13px;
+      color: var(--brand-deep);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .phase h3 {
+      margin-top: 10px;
+      font-size: 1.6rem;
+    }
+
+    .phase p {
+      margin-top: 10px;
+      font-size: 15px;
+    }
+
+    .phase ul,
+    .method-list,
+    .mini-list,
+    .check-list,
+    .compare-list {
+      margin: 16px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .phase li,
+    .method-list li,
+    .mini-list li,
+    .check-list li,
+    .compare-list li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .phase li::before,
+    .method-list li::before,
+    .mini-list li::before,
+    .check-list li::before,
+    .compare-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 11px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+    }
+
+    .method-grid {
+      margin-top: 22px;
+      grid-template-columns: 1.3fr 0.9fr;
+    }
+
+    .method-block,
+    .metric-strip,
+    .type,
+    .fact,
+    .compare-panel,
+    .stack-card,
+    .template-tip {
+      border-radius: 24px;
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 249, 241, 0.7));
+      padding: 22px;
+    }
+
+    .method-block h3,
+    .metric-strip h3,
+    .type h3,
+    .fact h3,
+    .compare-panel h3,
+    .stack-card h3 {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+    }
+
+    .steps {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 12px 0;
+      border-top: 1px solid rgba(53, 43, 32, 0.08);
+    }
+
+    .step:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .step-no {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(15, 111, 115, 0.08);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .step strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .metric-strip {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .metric-chip {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(15, 111, 115, 0.06);
+      border: 1px solid rgba(15, 111, 115, 0.08);
+    }
+
+    .metric-chip strong {
+      display: block;
+      color: var(--accent);
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .ladder {
+      margin-top: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .ladder-item {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      padding: 18px 0;
+      border-top: 1px solid rgba(53, 43, 32, 0.08);
+    }
+
+    .ladder-item:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .ladder-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(153, 81, 42, 0.08);
+      color: var(--brand-deep);
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .ladder-item strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .types-grid {
+      margin-top: 22px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .type header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .type .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 111, 115, 0.08);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .template-shell {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .template-shortcuts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .template-jump {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(109, 52, 21, 0.12);
+      background: rgba(255, 255, 255, 0.66);
+      color: var(--brand-deep);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 180ms ease, border 180ms ease, background 180ms ease;
+    }
+
+    .template-jump:hover,
+    .template-jump.active {
+      transform: translateY(-2px);
+      border-color: rgba(15, 111, 115, 0.16);
+      background: rgba(15, 111, 115, 0.08);
+      color: var(--accent);
+    }
+
+    details.template {
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 248, 238, 0.66));
+      overflow: hidden;
+    }
+
+    details.template[open] {
+      box-shadow: 0 18px 40px rgba(60, 38, 19, 0.08);
+    }
+
+    details.template summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 20px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+    }
+
+    details.template summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .template-title strong {
+      display: block;
+      font-size: 19px;
+      color: var(--ink);
+    }
+
+    .template-title span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .summary-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(153, 81, 42, 0.08);
+      color: var(--brand-deep);
+      font-weight: 700;
+      flex: none;
+    }
+
+    .template-body {
+      padding: 0 22px 22px;
+      border-top: 1px solid rgba(53, 43, 32, 0.08);
+    }
+
+    .template-note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(15, 111, 115, 0.07);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .code-wrap {
+      margin-top: 18px;
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(31, 29, 26, 0.82);
+      color: #fffaf2;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    pre {
+      margin: 0;
+      padding: 20px;
+      overflow: auto;
+      border-radius: 18px;
+      background: #1f1d1a;
+      color: #f7f1e9;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    .compare-grid,
+    .stack-grid {
+      margin-top: 22px;
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .boundary-lab {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 0.72fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .lab-column {
+      padding: 22px;
+      border-radius: 24px;
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 248, 238, 0.64));
+    }
+
+    .lab-column.dark {
+      background: linear-gradient(180deg, rgba(35, 30, 27, 0.96), rgba(46, 36, 29, 0.94));
+      color: rgba(255, 248, 238, 0.92);
+    }
+
+    .lab-column .label {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(153, 81, 42, 0.08);
+      color: var(--brand-deep);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lab-column.dark .label {
+      background: rgba(255, 248, 238, 0.08);
+      color: rgba(255, 248, 238, 0.76);
+    }
+
+    .lab-column strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 19px;
+    }
+
+    .lab-column p {
+      margin-top: 10px;
+      font-size: 15px;
+    }
+
+    .lab-output {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(15, 111, 115, 0.06);
+      color: var(--muted);
+      font-size: 14px;
+      border: 1px solid rgba(15, 111, 115, 0.08);
+    }
+
+    .lab-column.dark .lab-output {
+      background: rgba(255, 248, 238, 0.06);
+      color: rgba(255, 248, 238, 0.76);
+      border-color: rgba(255, 248, 238, 0.08);
+    }
+
+    .compare-panel.warning {
+      background: linear-gradient(180deg, rgba(255, 248, 238, 0.92), rgba(255, 244, 231, 0.8));
+    }
+
+    .compare-panel.safe {
+      background: linear-gradient(180deg, rgba(242, 251, 250, 0.9), rgba(237, 247, 246, 0.78));
+    }
+
+    .fact {
+      display: grid;
+      gap: 12px;
+    }
+
+    .facts-grid {
+      margin-top: 22px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .fact-kicker {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--brand-deep);
+    }
+
+    .stack-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stack-card {
+      min-height: 180px;
+    }
+
+    .stack-card strong {
+      display: block;
+      font-size: 17px;
+      color: var(--brand-deep);
+      margin-bottom: 8px;
+    }
+
+    .check-grid {
+      margin-top: 22px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .check-card {
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(53, 43, 32, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 248, 238, 0.64));
+    }
+
+    .check-card h3 {
+      margin-bottom: 12px;
+      font-size: 1.3rem;
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding: 24px 8px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .mono {
+      font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+      font-size: 0.96em;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 520ms ease, transform 520ms ease;
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: relative;
+        top: 0;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid,
+      .mode-grid,
+      .boundary-lab,
+      .path-rail,
+      .triptych,
+      .types-grid,
+      .compare-grid,
+      .stack-grid,
+      .facts-grid,
+      .check-grid,
+      .method-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .section {
+        padding: 28px 22px;
+      }
+
+      .ladder-item {
+        grid-template-columns: 1fr;
+      }
+
+      .header-links {
+        display: none;
+      }
+
+      .path-rail::before {
+        display: none;
+      }
+
+      .path-step {
+        min-height: auto;
+        padding: 14px 0 0;
+        border-top: 1px solid rgba(53, 43, 32, 0.08);
+      }
+
+      .path-step:first-child {
+        border-top: none;
+      }
+
+      .path-step::before {
+        margin: 0 0 12px;
+      }
+
+      .path-step strong,
+      .path-step span {
+        text-align: left;
+      }
+
+      .signal-card,
+      .signal-card:nth-child(2),
+      .signal-card:nth-child(3),
+      .signal-card:nth-child(4) {
+        transform: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header-inner,
+      .page {
+        width: min(var(--max), calc(100vw - 20px));
+      }
+
+      h1 {
+        max-width: none;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top">
+        <div class="brand-mark">P</div>
+        <div class="brand-copy">
+          <strong>Prompt Path</strong>
+          <span>Day 2 到 Day 4 · 从任务提示词到工具调用提示词</span>
+        </div>
+      </a>
+      <nav class="header-links" aria-label="快速导航">
+        <a href="#roadmap">路线图</a>
+        <a href="#method">方法论</a>
+        <a href="#types">类型</a>
+        <a href="#templates">模板</a>
+        <a href="#boundaries">边界</a>
+        <a href="#stack">最终形态</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero reveal is-visible" id="top">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">Prompt Learning · Day 2 - Day 4</div>
+          <h1>从任务提示词，到工具调用提示词</h1>
+          <p class="hero-lead">
+            这页不是资料堆砌，而是一条完整学习路径：先学会定义任务和输出，再学会守住知识边界，最后学会给模型接工具、设停手条件和人工兜底。
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#method">先看方法论</a>
+            <a class="btn" href="#templates">直接拿模板</a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <strong>3 天</strong>
+              <span>从 Day 2 到 Day 4 的连续升级</span>
+            </div>
+            <div class="hero-stat">
+              <strong>6 类</strong>
+              <span>最常用 Prompt 类型一页讲清</span>
+            </div>
+            <div class="hero-stat">
+              <strong>5 组</strong>
+              <span>可直接复制起稿的最小模板</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="console-top">
+            <div class="console-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div class="console-title">Prompt System Canvas</div>
+          </div>
+          <div class="visual-stack">
+            <div class="signal-card">
+              <div class="cap">Task Layer</div>
+              <strong>先把任务和输出收住</strong>
+              <p>分类、建议、结构化输出，先定义你到底要模型交付什么。</p>
+            </div>
+            <div class="signal-card">
+              <div class="cap">Knowledge Layer</div>
+              <strong>再决定知识从哪里来</strong>
+              <ul>
+                <li>少量稳定规则：Prompt 塞规则</li>
+                <li>一次性材料：长上下文</li>
+                <li>要追溯和最新规则：RAG / file_search</li>
+              </ul>
+            </div>
+            <div class="signal-card">
+              <div class="cap">Action Layer</div>
+              <strong>最后定义模型能做到哪一步</strong>
+              <ul>
+                <li>什么时候该调工具</li>
+                <li>哪些工具只是查询，哪些会真正执行</li>
+                <li>什么时候必须停下来或转人工</li>
+              </ul>
+            </div>
+            <div class="signal-card">
+              <div class="cap">Product Outcome</div>
+              <strong>Prompt 最终会长成一套系统规范</strong>
+              <p>它不只是问法，而是任务、输出、知识、工具和风控的组合设计。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-path">
+        <div class="hero-path-label">Prompt Evolution</div>
+        <div class="path-rail">
+          <div class="path-step">
+            <strong>任务</strong>
+            <span>先把能力目标说清楚</span>
+          </div>
+          <div class="path-step">
+            <strong>输出</strong>
+            <span>先定字段，再写 Prompt</span>
+          </div>
+          <div class="path-step">
+            <strong>知识</strong>
+            <span>哪些内容能说，哪些不能脑补</span>
+          </div>
+          <div class="path-step">
+            <strong>路由</strong>
+            <span>Prompt、长上下文、RAG、Wiki 怎么选</span>
+          </div>
+          <div class="path-step">
+            <strong>工具</strong>
+            <span>什么时候查，先查什么</span>
+          </div>
+          <div class="path-step">
+            <strong>风控</strong>
+            <span>什么时候必须停下来或转人工</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-strip reveal">
+      <div class="guide-top">
+        <div>
+          <div class="section-kicker">Study Modes</div>
+          <h2>这页最适合这样学</h2>
+        </div>
+        <p>如果你是第一次系统学 Prompt，先走主线；如果你已经在做作品，直接看模板；如果你在做内部助手，优先看工具边界。</p>
+      </div>
+      <div class="mode-grid">
+        <a class="mode-card" href="#evolution">
+          <div class="mode-tag">理解主线</div>
+          <strong>先看 Prompt 怎么一路升级</strong>
+          <p>适合第一次把 Day 2 到 Day 4 串起来，先理解任务、知识、工具三层边界。</p>
+        </a>
+        <a class="mode-card" href="#templates">
+          <div class="mode-tag">直接上手</div>
+          <strong>先拿模板起稿</strong>
+          <p>适合已经有具体场景的人，直接从分类、建议、结构化、检索和工具调用模板开始写。</p>
+        </a>
+        <a class="mode-card" href="#boundaries">
+          <div class="mode-tag">做产品</div>
+          <strong>先看边界和停手条件</strong>
+          <p>适合内部客服/运营、Agent、工具调用类产品，重点看最少必要工具原则和高风险边界。</p>
+        </a>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="toc">
+        <h2>页面目录</h2>
+        <nav class="toc-list" aria-label="页面目录">
+          <a href="#roadmap">三天路线图</a>
+          <a href="#method">Prompt 设计方法论</a>
+          <a href="#evolution">进化路径</a>
+          <a href="#types">Prompt 类型</a>
+          <a href="#templates">模板库</a>
+          <a href="#boundaries">工具边界</a>
+          <a href="#stack">最终形态</a>
+          <a href="#checklist">复习检查表</a>
+        </nav>
+        <div class="toc-note">
+          学习顺序建议：先看 <span class="mono">方法论</span>，再看 <span class="mono">类型</span> 和 <span class="mono">模板</span>，最后看 <span class="mono">工具边界</span>。
+        </div>
+      </aside>
+
+      <div class="stack">
+        <section class="section reveal" id="roadmap">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Roadmap</div>
+              <h2>Day 2 到 Day 4，到底在学同一件什么事</h2>
+            </div>
+          </div>
+          <p>这三天不是三套互相独立的 Prompt 课，而是在逐步搭一套更像产品系统的模型规范。</p>
+          <div class="triptych">
+            <article class="phase">
+              <div class="day">Day 2</div>
+              <h3>守住知识边界</h3>
+              <p>重点不是让模型更会说，而是让它只基于资料回答、资料不足时承认不足、不要把常识脑补成企业规则。</p>
+              <ul>
+                <li>先定义输出合同</li>
+                <li>资料不足时明确兜底</li>
+                <li>结构化输出让系统接得住</li>
+              </ul>
+            </article>
+            <article class="phase">
+              <div class="day">Day 3</div>
+              <h3>选对知识路线</h3>
+              <p>不是所有问题都上 RAG。要先判断规则少不少、资料大不大、答案是否要追溯、知识是不是需要长期沉淀。</p>
+              <ul>
+                <li>Prompt 塞规则适合小而稳的任务</li>
+                <li>长上下文适合一次性材料</li>
+                <li>RAG / Wiki 适合企业知识场景</li>
+              </ul>
+            </article>
+            <article class="phase">
+              <div class="day">Day 4</div>
+              <h3>给模型接上行动能力</h3>
+              <p>重点不是“能不能调工具”，而是“什么时候该查、先查什么、什么时候必须停下来或转人工”。</p>
+              <ul>
+                <li>Workflow 管流程</li>
+                <li>Agent 管决策</li>
+                <li>Tool Calling 管执行</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section reveal" id="method">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Method</div>
+              <h2>Prompt 设计方法论</h2>
+            </div>
+          </div>
+          <p><span class="mono">Prompt</span> 不是一句问法，而是任务、规则、输出、边界和兜底动作的组合设计。真正稳定的 Prompt，往往来自方法，而不是灵感。</p>
+          <div class="method-grid">
+            <div class="method-block">
+              <h3>最佳设计流程</h3>
+              <div class="steps">
+                <div class="step">
+                  <div class="step-no">1</div>
+                  <div><strong>先定义任务</strong><span>明确要解决什么问题，输入是什么，输出给谁用。</span></div>
+                </div>
+                <div class="step">
+                  <div class="step-no">2</div>
+                  <div><strong>先定义输出合同</strong><span>先定标签、字段、枚举、兜底值，再写 Prompt。</span></div>
+                </div>
+                <div class="step">
+                  <div class="step-no">3</div>
+                  <div><strong>先定义评测标准</strong><span>没有评测，优化就会变成“凭感觉改文案”。</span></div>
+                </div>
+                <div class="step">
+                  <div class="step-no">4</div>
+                  <div><strong>先跑测试，再补规则</strong><span>先找错误模式，再去补边界、优先级、格式和兜底。</span></div>
+                </div>
+                <div class="step">
+                  <div class="step-no">5</div>
+                  <div><strong>只在必要时补 few-shot</strong><span>few-shot 用来补最难样本，不是为了把 Prompt 变长。</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="metric-strip">
+              <h3>写规则时的 5 个优先级</h3>
+              <div class="metric-chip">
+                <strong>1. 输出闭集约束</strong>
+                <span>先收住标签、字段、枚举值，防止模型自由发挥。</span>
+              </div>
+              <div class="metric-chip">
+                <strong>2. 防止乱编约束</strong>
+                <span>资料不足、信息不足、证据不足时，怎么保守处理。</span>
+              </div>
+              <div class="metric-chip">
+                <strong>3. 建议质量约束</strong>
+                <span>必须具体、可执行，不能空泛。</span>
+              </div>
+              <div class="metric-chip">
+                <strong>4. 业务判定规则</strong>
+                <span>多问题怎么判主问题，冲突场景如何优先级处理。</span>
+              </div>
+              <div class="metric-chip">
+                <strong>5. 输出格式约束</strong>
+                <span>是否必须 JSON，是否允许额外解释，系统如何接。</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section reveal" id="evolution">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Evolution</div>
+              <h2>从任务提示词，到工具调用提示词</h2>
+            </div>
+          </div>
+          <p>这条进化路线最重要的，不是 Prompt 越写越长，而是它越来越像一套系统规范。</p>
+          <div class="ladder">
+            <div class="ladder-item">
+              <div class="ladder-tag">Step 1</div>
+              <div>
+                <strong>任务提示词</strong>
+                <p>先回答“这是什么任务”，例如分类、提取、摘要、建议。这个阶段重点是把目标和输出写清楚。</p>
+              </div>
+            </div>
+            <div class="ladder-item">
+              <div class="ladder-tag">Step 2</div>
+              <div>
+                <strong>结构化输出提示词</strong>
+                <p>再回答“输出要长什么样”。从自由文本，收成标签、字段或 JSON，让系统能解析、统计和接流程。</p>
+              </div>
+            </div>
+            <div class="ladder-item">
+              <div class="ladder-tag">Step 3</div>
+              <div>
+                <strong>知识增强提示词</strong>
+                <p>接着回答“知识从哪里来”。是直接把规则写进 Prompt，还是用长上下文、RAG 或 Wiki 去补知识。</p>
+              </div>
+            </div>
+            <div class="ladder-item">
+              <div class="ladder-tag">Step 4</div>
+              <div>
+                <strong>工具调用提示词</strong>
+                <p>最后回答“模型能行动到哪一步”。什么时候查工具、查哪些、够不够、哪些动作不能自动执行。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section reveal" id="types">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Types</div>
+              <h2>你最近其实在写这 6 类 Prompt</h2>
+            </div>
+          </div>
+          <div class="types-grid">
+            <article class="type">
+              <header>
+                <h3>分类类 Prompt</h3>
+                <span class="tag">闭集</span>
+              </header>
+              <p>把文本稳定映射到固定标签集合里。</p>
+              <ul class="mini-list">
+                <li>先收住标签</li>
+                <li>定义边界和优先级</li>
+                <li>信息不足要有兜底</li>
+              </ul>
+            </article>
+            <article class="type">
+              <header>
+                <h3>建议类 Prompt</h3>
+                <span class="tag">动作</span>
+              </header>
+              <p>不只是看懂内容，还要输出下一步可执行动作。</p>
+              <ul class="mini-list">
+                <li>建议必须具体</li>
+                <li>高风险先核验或升级</li>
+                <li>不要输出空泛话术</li>
+              </ul>
+            </article>
+            <article class="type">
+              <header>
+                <h3>结构化输出 Prompt</h3>
+                <span class="tag">Schema</span>
+              </header>
+              <p>让输出能被系统接住，而不是只变成一段漂亮文字。</p>
+              <ul class="mini-list">
+                <li>先定义字段</li>
+                <li>再定义 schema</li>
+                <li>固定合法格式</li>
+              </ul>
+            </article>
+            <article class="type">
+              <header>
+                <h3>检索型 Prompt</h3>
+                <span class="tag">RAG</span>
+              </header>
+              <p>只基于检索资料作答，资料不足就承认不足，资料冲突就承认冲突。</p>
+              <ul class="mini-list">
+                <li>只在证据内回答</li>
+                <li>不要把常识补成规则</li>
+                <li>尽量绑定材料来源</li>
+              </ul>
+            </article>
+            <article class="type">
+              <header>
+                <h3>Wiki / 汇总型 Prompt</h3>
+                <span class="tag">归纳</span>
+              </header>
+              <p>基于整理后的知识层做总结和解释，更强调归纳质量和口径一致性。</p>
+              <ul class="mini-list">
+                <li>区分原文与总结</li>
+                <li>指出资料差异</li>
+                <li>精确条款回查原文</li>
+              </ul>
+            </article>
+            <article class="type">
+              <header>
+                <h3>Tool Calling Prompt</h3>
+                <span class="tag">行动</span>
+              </header>
+              <p>让模型知道什么时候查工具、什么时候停、什么时候转人工。</p>
+              <ul class="mini-list">
+                <li>调用前置条件</li>
+                <li>最少必要工具原则</li>
+                <li>动作类工具边界</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section reveal" id="templates">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Templates</div>
+              <h2>可直接练习的 Prompt 模板</h2>
+            </div>
+          </div>
+          <p>下面不是完整成品，而是最适合入手的一版最小模板。先用它们起稿，再按 badcase 补规则。</p>
+          <div class="template-shortcuts" aria-label="模板快捷切换">
+            <button class="template-jump active" data-template-open="template-classify">分类模板</button>
+            <button class="template-jump" data-template-open="template-advise">建议模板</button>
+            <button class="template-jump" data-template-open="template-schema">结构化模板</button>
+            <button class="template-jump" data-template-open="template-retrieval">检索模板</button>
+            <button class="template-jump" data-template-open="template-tool">工具调用模板</button>
+          </div>
+
+          <div class="template-shell">
+            <details class="template" id="template-classify" open>
+              <summary>
+                <div class="template-title">
+                  <strong>模板 1 · 分类类 Prompt</strong>
+                  <span>适合主题分类、意图识别、工单归类等固定标签任务。</span>
+                </div>
+                <div class="summary-mark">01</div>
+              </summary>
+              <div class="template-body">
+                <div class="template-note">先收住标签闭集，再补边界和优先级，最后把输出收成固定值。</div>
+                <div class="code-wrap">
+                  <button class="copy-btn" data-copy-target="tpl-classify">复制模板</button>
+                  <pre id="tpl-classify"><code>角色：
+你是[业务场景]的[分类助手名称]。
+
+任务：
+根据用户输入的[文本类型]，判断其最主要的[分类对象]，并从以下标签中选择一个返回。
+
+标签定义：
+- [标签1]：[定义]
+- [标签2]：[定义]
+- [标签3]：[定义]
+- 其他：[兜底定义]
+
+判定规则：
+1. 只能选择一个最主要标签
+2. 如果一条内容同时涉及多个问题，只返回用户最核心抱怨对应的标签
+3. 如果信息不足，返回“其他”
+
+输出要求：
+1. 你的回答必须且只能是标签列表中的一个值
+2. 不要解释原因
+3. 不要输出额外文字
+
+输入内容：
+{{input_text}}</code></pre>
+                </div>
+              </div>
+            </details>
+
+            <details class="template" id="template-advise">
+              <summary>
+                <div class="template-title">
+                  <strong>模板 2 · 建议类 Prompt</strong>
+                  <span>适合客服建议、运营跟进、异常处理建议等动作型任务。</span>
+                </div>
+                <div class="summary-mark">02</div>
+              </summary>
+              <div class="template-body">
+                <div class="template-note">建议类 Prompt 的核心不是像人说话，而是输出能被执行的下一步动作。</div>
+                <div class="code-wrap">
+                  <button class="copy-btn" data-copy-target="tpl-advise">复制模板</button>
+                  <pre id="tpl-advise"><code>角色：
+你是[业务场景]的[分析助手名称]。
+
+任务：
+根据用户输入的[文本类型]，识别主要问题，并给[使用对象]输出具体、可执行的跟进建议。
+
+一、输出闭集约束
+1. 问题类型必须且只能从以下标签中选择：[标签A]、[标签B]、[标签C]、其他
+
+二、真实性与保守性约束
+2. 不要编造不存在的事实
+3. 如果信息不足，明确指出还需要补充哪些信息
+4. 如果建议涉及原因判断、责任判断或异常说明，优先先写“核验/确认”
+
+三、建议质量约束
+5. 跟进建议必须具体、可执行、不能空泛
+6. 跟进建议优先写[使用对象]下一步可立即执行的动作
+
+四、业务判定规则
+7. 如果是高风险问题，优先给出回访、核验或升级处理动作
+
+五、输出格式约束
+8. 请按固定格式输出，不要补充额外解释</code></pre>
+                </div>
+              </div>
+            </details>
+
+            <details class="template" id="template-schema">
+              <summary>
+                <div class="template-title">
+                  <strong>模板 3 · 结构化输出 Prompt</strong>
+                  <span>适合需要前端展示、流程判断和系统接入的 JSON 输出任务。</span>
+                </div>
+                <div class="summary-mark">03</div>
+              </summary>
+              <div class="template-body">
+                <div class="template-note">先定义字段和 schema，再写 Prompt。结构化输出让模型从“会答”变成“能接流程”。</div>
+                <div class="code-wrap">
+                  <button class="copy-btn" data-copy-target="tpl-schema">复制模板</button>
+                  <pre id="tpl-schema"><code>角色：
+你是[业务场景]的[分析助手名称]。
+
+任务：
+根据用户输入的[文本类型]，输出一个 JSON 对象，供前端展示、运营跟进和后续流程判断使用。
+
+字段说明：
+- [field_1]：[类型 / 含义 / 枚举]
+- [field_2]：[类型 / 含义 / 枚举]
+- [field_3]：[类型 / 含义 / 枚举]
+
+真实性与保守性约束：
+- 不要编造不存在的事实
+- 如果信息不足，在缺失字段中明确指出需要补充什么
+
+交付格式：
+1. 输出必须是合法 JSON
+2. 只输出一个 JSON 对象
+3. 不要新增字段，不要漏字段
+4. 不要输出 markdown 或额外解释</code></pre>
+                </div>
+              </div>
+            </details>
+
+            <details class="template" id="template-retrieval">
+              <summary>
+                <div class="template-title">
+                  <strong>模板 4 · 检索型 Prompt</strong>
+                  <span>适合 SOP、规则、FAQ、资料问答等基于检索上下文的回答任务。</span>
+                </div>
+                <div class="summary-mark">04</div>
+              </summary>
+              <div class="template-body">
+                <div class="template-note">检索型 Prompt 的第一职责，不是更会答，而是只在资料支持的范围内答。</div>
+                <div class="code-wrap">
+                  <button class="copy-btn" data-copy-target="tpl-retrieval">复制模板</button>
+                  <pre id="tpl-retrieval"><code>请仅基于给定资料回答用户问题，不要使用资料外的信息，不要补充或假设企业规则。
+
+回答要求：
+1. 优先依据资料中的明确内容直接回答问题
+2. 如果资料不足以支持明确结论，必须明确回答“当前资料不足，无法确认”
+3. 如果资料之间存在冲突，必须明确说明“资料内容存在冲突”
+4. 不要编造规则、时间、责任方、处理结论或资料中未明确说明的限制条件
+5. 回答尽量简洁，先给结论，再说明依据
+
+资料：
+{{retrieved_context}}
+
+问题：
+{{user_query}}</code></pre>
+                </div>
+              </div>
+            </details>
+
+            <details class="template" id="template-tool">
+              <summary>
+                <div class="template-title">
+                  <strong>模板 5 · Tool Calling Prompt</strong>
+                  <span>适合内部客服/运营助手、异常处理助手、任务执行型 Agent。</span>
+                </div>
+                <div class="summary-mark">05</div>
+              </summary>
+              <div class="template-body">
+                <div class="template-note">重点不是让模型多调用工具，而是写清：什么时候查、先查什么、什么时候停、什么时候转人工。</div>
+                <div class="code-wrap">
+                  <button class="copy-btn" data-copy-target="tpl-tool">复制模板</button>
+                  <pre id="tpl-tool"><code>角色：
+你是[业务场景]内部使用的[助手名称]。
+
+任务：
+根据输入内容，结合必要的上下文和工具结果，输出结构化判断与下一步建议。
+
+可调用工具：
+- [tool_1]
+- [tool_2]
+- [tool_3]
+
+工具使用规则：
+1. 先基于输入直接判断；只有在需要更准确判断或生成更可靠建议时，才调用工具
+2. 优先调用查询类工具，先补全上下文，再决定是否继续
+3. 只调用最少必要工具，不要重复调用，不要无意义扩查
+4. 动作类工具必须更谨慎使用，只能在高风险、信息冲突、需要人工核验等场景下调用
+
+高风险边界：
+1. 不要直接给出赔付结论、责任归属或对外承诺
+2. 信息不足时优先返回“信息不足”或建议人工核验
+3. 高风险场景必须转人工或创建人工复核工单
+
+交付格式：
+1. 输出必须是合法 JSON
+2. 只输出一个 JSON 对象
+3. 最外层字段固定
+4. 不要补充额外解释</code></pre>
+                </div>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="section reveal" id="boundaries">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Boundaries</div>
+              <h2>工具调用最容易出问题的地方</h2>
+            </div>
+          </div>
+          <p>Day 4 最关键的，不是学会几个新术语，而是知道为什么 Prompt 里必须把工具边界和停手条件写清楚。</p>
+
+          <div class="boundary-lab">
+            <article class="lab-column dark">
+              <div class="label">输入</div>
+              <strong>“这单体验很差”</strong>
+              <p>这是一个典型的低信息输入。用户表达了不满，但没有明确说清是时效、态度、货损还是信息同步问题。</p>
+              <div class="lab-output">产品问题：系统应该继续乱查，还是先停下来？</div>
+            </article>
+            <article class="lab-column">
+              <div class="label">无边界系统</div>
+              <strong>模型会倾向继续行动</strong>
+              <p>如果 Prompt 没写最少必要工具原则，它可能会把订单信息、状态、规则、SOP 都查一遍，试图“把事情做完整”。</p>
+              <div class="lab-output">结果：调用过多、成本增加、还可能因为证据不足而判断跑偏。</div>
+            </article>
+            <article class="lab-column">
+              <div class="label">产品级系统</div>
+              <strong>先判断是否足够，再决定查不查</strong>
+              <p>更合理的逻辑是：先判断信息是否足够；不足就返回信息不足，或者直接进入人工复核，而不是无意义扩查。</p>
+              <div class="lab-output">结果：更可控、更省成本，也更符合高风险业务的保守策略。</div>
+            </article>
+          </div>
+
+          <div class="compare-grid">
+            <article class="compare-panel warning">
+              <h3>没有“最少必要工具原则”时</h3>
+              <p>模型的生成机制，是根据上下文去预测下一个最合理的输出。训练里我们也经常鼓励模型继续推进任务，所以它天然更容易继续查、继续想、继续做。</p>
+              <ul class="compare-list">
+                <li>能查一个工具时查三个</li>
+                <li>明明信息不足却继续推进</li>
+                <li>为了“更完整”而无意义扩查</li>
+                <li>更容易出现乱用工具和多步失控</li>
+              </ul>
+            </article>
+            <article class="compare-panel safe">
+              <h3>写清工具边界后</h3>
+              <p>产品上更合理的办法，是让模型先判断信息是否足够。若不足，就停下来、返回信息不足，或者直接进入人工复核。</p>
+              <ul class="compare-list">
+                <li>先判断是否真的需要查工具</li>
+                <li>优先查询类工具，动作类工具后置</li>
+                <li>足够就停，不要重复调用</li>
+                <li>高风险场景直接转人工</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="template-tip" style="margin-top:18px;">
+            <p><strong>例子：</strong>如果用户评价只有一句 <span class="mono">“这单体验很差”</span>，没有边界的模型可能会把订单基础信息、订单状态、正常流转规则、异常处理 SOP 都查一遍；但更合理的产品逻辑是：先判断信息是否足够，不足就返回 <span class="mono">信息不足</span>，或直接进入人工判断。</p>
+          </div>
+
+          <div class="facts-grid">
+            <article class="fact">
+              <div class="fact-kicker">Concept 1</div>
+              <h3>tool schema</h3>
+              <p>给模型看的“工具说明书 + 参数格式说明”。</p>
+            </article>
+            <article class="fact">
+              <div class="fact-kicker">Concept 2</div>
+              <h3>strict mode</h3>
+              <p>让模型更严格地按 schema 传参数，少乱补字段和类型。</p>
+            </article>
+            <article class="fact">
+              <div class="fact-kicker">Concept 3</div>
+              <h3>call_id</h3>
+              <p>工具调用链路里的“对账编号”，把调用请求和调用结果对应起来。</p>
+            </article>
+            <article class="fact">
+              <div class="fact-kicker">Concept 4</div>
+              <h3>response 结构</h3>
+              <p>response 不只是最后一句回复，还包含工具调用过程和中间结果。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section reveal" id="stack">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Final Form</div>
+              <h2>Prompt 的最终形态，不是一句话，而是一套 Stack</h2>
+            </div>
+          </div>
+          <p>真正可落地的 AI Prompt，最后都会越来越像一套系统规范。不是文案更花，而是任务、输出、知识、工具和人工停手条件都被写进去了。</p>
+          <div class="stack-grid">
+            <article class="stack-card">
+              <strong>角色与任务定义</strong>
+              <p>先让模型知道自己是谁、要解决什么问题、这次任务服务于谁。</p>
+            </article>
+            <article class="stack-card">
+              <strong>输出 schema</strong>
+              <p>先定义字段、枚举、必填项和兜底值，让模型输出能被系统接住。</p>
+            </article>
+            <article class="stack-card">
+              <strong>知识层约束</strong>
+              <p>回答能不能用资料外信息，知识从 Prompt、长上下文、RAG 还是 Wiki 来。</p>
+            </article>
+            <article class="stack-card">
+              <strong>工具调用规则</strong>
+              <p>哪些工具可用，先查什么，调用前需要哪些参数和业务前提。</p>
+            </article>
+            <article class="stack-card">
+              <strong>高风险边界</strong>
+              <p>哪些结论不能自动下，哪些动作不能自动做，哪些场景必须保守处理。</p>
+            </article>
+            <article class="stack-card">
+              <strong>人工兜底规则</strong>
+              <p>信息不足、资料冲突、低置信度和高风险场景下，模型应该停在哪里。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section reveal" id="checklist">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Checklist</div>
+              <h2>写 Prompt 前，先问自己的 8 个问题</h2>
+            </div>
+          </div>
+          <div class="check-grid">
+            <article class="check-card">
+              <h3>任务面</h3>
+              <ul class="check-list">
+                <li>这个 Prompt 到底要解决什么任务？</li>
+                <li>输出是给人看，还是给系统接？</li>
+                <li>哪些字段必须先定义，哪些值必须闭集？</li>
+                <li>我要不要先跑最小 badcase 集？</li>
+              </ul>
+            </article>
+            <article class="check-card">
+              <h3>知识与工具面</h3>
+              <ul class="check-list">
+                <li>回答能不能使用资料外知识？</li>
+                <li>这个任务更适合 Prompt、长上下文、RAG 还是 Wiki？</li>
+                <li>什么时候该查工具，什么时候不该查？</li>
+                <li>信息不足和高风险场景下，模型应该停在哪里？</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">
+      这页适合配合 Day 2 - Day 4 学习包一起阅读。先讲主线，再讲方法论，再拿模板练，最后回到工具边界和人工停手条件。
+    </div>
+  </main>
+
+  <script>
+    const progress = document.getElementById('progress');
+    const navLinks = Array.from(document.querySelectorAll('.toc-list a, .header-links a'));
+    const sections = Array.from(document.querySelectorAll('main section[id]'));
+    const revealTargets = Array.from(document.querySelectorAll('.reveal'));
+    const templateButtons = Array.from(document.querySelectorAll('.template-jump'));
+    const templatePanels = Array.from(document.querySelectorAll('details.template'));
+
+    function updateProgress() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      progress.style.transform = `scaleX(${ratio})`;
+    }
+
+    function setActiveLink(id) {
+      navLinks.forEach((link) => {
+        const target = link.getAttribute('href');
+        link.classList.toggle('active', target === `#${id}`);
+      });
+    }
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveLink(entry.target.id);
+        }
+      });
+    }, {
+      rootMargin: '-35% 0px -45% 0px',
+      threshold: 0
+    });
+
+    sections.forEach((section) => sectionObserver.observe(section));
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      rootMargin: '0px 0px -10% 0px',
+      threshold: 0.08
+    });
+
+    revealTargets.forEach((target) => {
+      if (!target.classList.contains('is-visible')) {
+        revealObserver.observe(target);
+      }
+    });
+
+    document.querySelectorAll('.copy-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const targetId = button.getAttribute('data-copy-target');
+        const target = document.getElementById(targetId);
+        if (!target) return;
+
+        try {
+          await navigator.clipboard.writeText(target.innerText);
+          const original = button.textContent;
+          button.textContent = '已复制';
+          setTimeout(() => {
+            button.textContent = original;
+          }, 1400);
+        } catch (error) {
+          button.textContent = '复制失败';
+          setTimeout(() => {
+            button.textContent = '复制模板';
+          }, 1400);
+        }
+      });
+    });
+
+    function setActiveTemplateButton(targetId) {
+      templateButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.templateOpen === targetId);
+      });
+    }
+
+    templateButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.dataset.templateOpen;
+        const panel = document.getElementById(targetId);
+        if (!panel) return;
+
+        templatePanels.forEach((item) => {
+          item.open = item === panel;
+        });
+
+        setActiveTemplateButton(targetId);
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+
+    templatePanels.forEach((panel) => {
+      panel.addEventListener('toggle', () => {
+        if (panel.open) {
+          setActiveTemplateButton(panel.id);
+        }
+      });
+    });
+
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+  </script>
+</body>
+</html>
